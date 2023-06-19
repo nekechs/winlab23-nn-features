@@ -8,6 +8,11 @@ import bee
 x_width = 500
 y_width = 500
 
+def update_extreme(instance):
+    prob = 0.03
+    if random.random() < prob:
+        instance.rot += 0.1
+
 pygame.init()
 
 # Set up the drawing window
@@ -19,7 +24,7 @@ clock = pygame.time.Clock()
 
 bees = []
 for i in range(10):
-    bees.append(bee.Bee(screen, 2, 0.15))
+    bees.append(bee.Bee(screen, 2, 0.15, custom_update=update_extreme))
 
 # Run the simulation for 2 minutes (120 seconds)
 while time.time() - start_time < 120:
