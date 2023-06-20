@@ -69,7 +69,7 @@ def generate_video(outfile, num_bees, fwd_amount, turn_amount, is_fullrand, scre
 for f in os.listdir(videos_dir):
     os.remove(os.path.join(videos_dir, f))
 
-with open("students.csv", 'w', newline='') as file:
+with open("dataset.csv", 'w', newline='') as file:
     writer = csv.writer(file)
     field = ["file", "class", "begin frame", "end frame"]
     writer.writerow(field)
@@ -81,4 +81,4 @@ with open("students.csv", 'w', newline='') as file:
         else:
             file = generate_video(f"sample{video_number}", 1, 2, 0.15, False)
             nn_class=2
-        writer.writerow([file, nn_class, 50, 1023])
+        writer.writerow([os.path.abspath(file), nn_class, 50, 1000])
