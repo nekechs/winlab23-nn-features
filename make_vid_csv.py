@@ -6,8 +6,29 @@ from bee import Bee
 import os
 import subprocess
 import csv
+from datetime import datetime
+
+# Create this command because we want to start a ffmpeg process and pipe frames to it
+def prepare_ffmpeg_cmd(outfile, screen_dim=(512, 512)):
+    (x_width, y_width) = screen_dim
+    ffmpeg_command = [
+        "ffmpeg",
+        "-y",
+        "-f", "rawvideo",
+        "-vcodec", "rawvideo",
+        "-s", f"{x_width}x{y_width}",
+        "-pix_fmt", "rgb24",
+        "-r", "30",
+        "-i", "-",
+        "-c:v", "libx264",
+        "-preset", "ultrafast",
+        outfile
+    ]
+    return ffmpeg_command
 
 videos_dir="videos/"
+if not os.path.exists(videos_dir):
+    os.makedirs(videos_dir)
 
 # Some probability of turning right by 0.1 radians
 def update_custom(instance):
@@ -16,15 +37,6 @@ def update_custom(instance):
         instance.rot += 0.1
 
 def generate_video(outfile, num_bees, fwd_amount, turn_amount, is_fullrand, screen_dim=(512, 512), video_dir=videos_dir):
-    # setup frames directory
-    frames_dir="frames"
-    if not os.path.exists(frames_dir):
-        os.makedirs(frames_dir)
-    if not os.path.exists(video_dir):
-        os.makedirs(video_dir)
-    for f in os.listdir(frames_dir):
-        os.remove(os.path.join(frames_dir, f))
-    
     # Initialize some pygame stuff
     (x_width, y_width) = screen_dim
     pygame.init()
@@ -37,6 +49,9 @@ def generate_video(outfile, num_bees, fwd_amount, turn_amount, is_fullrand, scre
     for i in range(num_bees):
         bees.append(Bee(screen, fwd_amount, turn_amount, x_width=x_width, y_width=y_width))
     
+    output_file = f"{os.path.join(video_dir, outfile)}.h264"
+    ffmpeg_process = subprocess.Popen(prepare_ffmpeg_cmd(output_file), stdin=subprocess.PIPE)
+    print(ffmpeg_process)
     frame_number = 0
     while frame_number < 1024:  # Each of these is a frame
         # clock.tick(120)
@@ -56,14 +71,12 @@ def generate_video(outfile, num_bees, fwd_amount, turn_amount, is_fullrand, scre
 
         # Display stuff - Save images
         pygame.display.flip()
-        frame_filename = os.path.join(frames_dir, f"frame_{frame_number:06d}.png")
-        pygame.image.save(screen, frame_filename)
-
+        frame = pygame.surfarray.pixels3d(screen)
+        frame_rgb24 = np.asarray(frame, dtype=np.uint8)
+        ffmpeg_process.stdin.write(frame_rgb24.tobytes())
         frame_number += 1
     
     pygame.quit()
-    output_file = f"{os.path.join(video_dir, outfile)}.h264"
-    subprocess.call(["ffmpeg", "-r", "30", "-i", f"{frames_dir}/frame_%06d.png", "-c:v", "libx264", "-vf", "fps=60", output_file])
     return output_file
 
 for f in os.listdir(videos_dir):
@@ -75,10 +88,11 @@ with open("dataset.csv", 'w', newline='') as file:
     writer.writerow(field)
     num_videos = 150
     for video_number in range(num_videos):
+        title = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
         if random.random() < 0.5:
-            file = generate_video(f"sample{video_number}", 1, 2, 0.15, True)
+            file = generate_video(title, 1, 2, 0.15, True)
             nn_class=1
         else:
-            file = generate_video(f"sample{video_number}", 1, 2, 0.15, False)
+            file = generate_video(title, 1, 2, 0.15, False)
             nn_class=2
         writer.writerow([os.path.abspath(file), nn_class, 50, 1000])
