@@ -7,7 +7,7 @@ import os
 import subprocess
 import csv
 
-videos_dir="videos/first-set"
+videos_dir="videos/"
 
 # Some probability of turning right by 0.1 radians
 def update_custom(instance):
