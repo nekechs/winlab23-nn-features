@@ -6,8 +6,9 @@ import random
 class Bee:
     def __init__(self, screen, walk_strength, yaw_strength, custom_update=None, dot_radius=20, dot_color=(255,0,0), dot_speed=2, x_width=500, y_width=500):
         # Initialize position and rotation
-        self.x_pos = x_width // 2
-        self.y_pos = y_width // 2
+
+        self.x_pos = random.uniform(0,x_width)
+        self.y_pos = random.uniform(0,y_width)
         self.rot = 2 * math.pi * random.random()
 
         self.dot_radius = dot_radius
