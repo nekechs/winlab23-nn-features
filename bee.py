@@ -4,9 +4,8 @@ import math
 import random
 
 class Bee:
-    def __init__(self, screen, walk_strength, yaw_strength, custom_update=None, dot_radius=20, dot_color=(255,0,0), dot_speed=2, x_width=500, y_width=500):
+    def __init__(self, screen, walk_strength, custom_update=None, dot_radius=20, dot_color=(255,0,0), dot_speed=2, x_width=500, y_width=500):
         # Initialize position and rotation
-
         self.x_pos = random.uniform(0,x_width)
         self.y_pos = random.uniform(0,y_width)
         self.rot = 2 * math.pi * random.random()
@@ -16,7 +15,6 @@ class Bee:
         self.dot_speed = dot_speed
 
         self.walk_strength = walk_strength
-        self.yaw_strength = yaw_strength
 
         # Initialize the screen parameters
         self.screen = screen
@@ -39,14 +37,14 @@ class Bee:
         self.update_nonrand()
     
     def update_rand(self):
-        forward_deviation = self.walk_strength * np.random.power(1)
-        angle_deviation = self.yaw_strength * np.random.normal(0.0, 1.0)
+        forward_deviation = self.walk_strength * int(10 * np.random.random())
+        angle_deviation = (2 * math.pi / 360) * int(360 * np.random.random())
 
         # Deviation of x and y
         x_deviation = forward_deviation * math.cos(self.rot)
         y_deviation = forward_deviation * math.sin(self.rot)
 
-        self.rot += angle_deviation
+        self.rot = angle_deviation
 
         # Update dot position
         self.x_pos = max(self.dot_radius, min(self.x_pos + x_deviation, self.x_width - self.dot_radius))
