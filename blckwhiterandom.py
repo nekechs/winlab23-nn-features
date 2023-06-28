@@ -1,12 +1,15 @@
 import pygame
 import numpy as np
 import os
+import beesim
 
 # Adjust the probability of getting white screen (in percentage)
 white_prob = 100
 #for bee sim capure frame
 frame_number = 0
 frames_dir="frames"
+
+
 
 # Initialize Pygame
 pygame.init()
@@ -41,7 +44,7 @@ while running:
 
     # Determine screen color based on the probability
     random_num = np.random.randint(1, 101)  # Generate a random integer between 1 and 100
-    print(random_num)
+    
     if random_num <= white_prob:
         screen.fill(pygame.Color("white"))
     else:
@@ -56,6 +59,9 @@ while running:
     frame_filename = os.path.join(frames_dir, f"frame_{frame_number:06d}.png")
     pygame.image.save(screen, frame_filename)
     frame_number += 1
+
+beesim.assemble_video("outputvids2")
+
 
 # Quit the game
 pygame.quit()
