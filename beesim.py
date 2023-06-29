@@ -7,17 +7,27 @@ import random
 
 # Combines all images from the "frames" directory into one video using ffmpeg
 def assemble_video(filename, frames_dir="frames", video_dir="videos"):
+    if not os.path.exists(video_dir):
+        os.makedirs(video_dir)
+    for f in os.listdir(video_dir):
+        os.remove(os.path.join(video_dir, f))
+
     outfile_path = os.path.join(video_dir, f"{filename}.h264")
     subprocess.call(["ffmpeg", "-r", "30", "-i", f"{frames_dir}/frame_%06d.png", "-c:v", "libx264", "-vf", "fps=60", outfile_path])
     return outfile_path
 
-def make_test_frames(classnum, screen_dim, frames_dir="frames", video_dir="videos"):
+def make_test_frames(classnum, screen_dim, num_frames=1024, frames_dir="frames", video_dir="videos"):
     (x_dim, y_dim) = screen_dim
     pygame.init()
     screen = pygame.display.set_mode([x_dim, y_dim])
+    
+    if not os.path.exists(frames_dir):
+        os.makedirs(frames_dir)
+    for f in os.listdir(frames_dir):
+        os.remove(os.path.join(frames_dir, f))
 
     frame_number = 0
-    while frame_number < 1024:
+    while frame_number < num_frames:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -41,6 +51,11 @@ def make_frames(outfile, classnum, screen_dim, num_bees=1, fwd_amount=2, frames_
     screen = pygame.display.set_mode([x_dim, y_dim])
     start_time = time.time()
     clock = pygame.time.Clock()
+
+    if not os.path.exists(frames_dir):
+        os.makedirs(frames_dir)
+    for f in os.listdir(frames_dir):
+        os.remove(os.path.join(frames_dir, f))
     
     bees=[]
     for i in range(num_bees):
