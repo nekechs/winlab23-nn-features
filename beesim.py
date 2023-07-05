@@ -3,6 +3,7 @@ import time
 from bee import Bee
 import os
 import subprocess
+from datetime import datetime
 import random
 
 # Combines all images from the "frames" directory into one video using ffmpeg
@@ -23,10 +24,10 @@ def make_test_frames(classnum, screen_dim, num_frames=1024, frames_dir="frames",
     
     if not os.path.exists(frames_dir):
         os.makedirs(frames_dir)
-    for f in os.listdir(frames_dir):
-        os.remove(os.path.join(frames_dir, f))
 
-    frame_number = 0
+    fake_filename = datetime.utcnow().strftime('%Y-%m-%d_%H:%M:%S_%f_h264')
+    fake_filepath = datetime.utcnow().strftime('FAKEPATH/%Y-%m-%d %H:%M:%S.%f.h264')
+    frame_number = 1
     while frame_number < num_frames:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -38,9 +39,21 @@ def make_test_frames(classnum, screen_dim, num_frames=1024, frames_dir="frames",
         if classnum == 2:
             screen.fill((0, 0, 0))
 
+        # if random.random() < 0.5:
+        #     screen.fill((255, 255, 255))
+        # else:
+        #     screen.fill((0, 0, 0))
+
         pygame.display.flip()
-        frame_filename = os.path.join(frames_dir, f"frame_{frame_number:06d}.png")
+        frame_filename = os.path.join(frames_dir, f"{fake_filename}_{frame_number}.0.png")
+        class_filename = os.path.join(frames_dir, f"{fake_filename}_{frame_number}.cls")
+        md_filename = os.path.join(frames_dir, f"{fake_filename}_{frame_number}.metadata.txt")
+
         pygame.image.save(screen, frame_filename)
+        with open(class_filename, 'w') as file:
+            file.write(f"{classnum}")
+        with open(md_filename, 'w') as file:
+            file.write(f"{fake_filepath},{frame_number},{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}")
         frame_number += 1
 
 def make_frames(outfile, classnum, screen_dim, num_bees=1, fwd_amount=2, frames_dir="frames", video_dir="videos"):
