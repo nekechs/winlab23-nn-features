@@ -3,6 +3,7 @@ import numpy as np
 import os
 import beesim
 from datetime import datetime
+
 timestamp = datetime.utcnow().strftime('%Y-%m-%d_%H:%M:%S_%f')
 metastamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
 metastamp2 = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
@@ -11,6 +12,7 @@ frame_number = 0
 frames_dir="frames"
 class_dir="class"
 metadata_dir="metadata"
+framenclass_dir="framenclass"
 
 pygame.init()
 
@@ -22,20 +24,23 @@ pygame.display.set_caption("circle rotation")
 
 # Create a surface to draw the circle on
 image_surface = pygame.Surface((200, 200), pygame.SRCALPHA)
-pygame.draw.circle(image_surface, (0, 0, 0), (100, 100), 100,False,True,True,True)
+pygame.draw.circle(image_surface, (0, 0, 0), (100, 100), 100, False, True, True, True)
 
 # Create a clock object to control the frame rate
 clock = pygame.time.Clock()
 
 # Set the total run time in seconds
-total_time = 10
+total_time = 5
 start_time = pygame.time.get_ticks()
 
 rotation_angle = 0
-rotation_speed = 60
+rotation_speed = -60
+
 
 running = True
 while running:
+    rotation_angle = 0
+    rotation_speed = -60
     # Handle events
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -63,16 +68,37 @@ while running:
     # Control the frame rate
     clock.tick(30)
 
-    classnum = 2
-    frame_filename = os.path.join(frames_dir, f"{timestamp}_h264_{frame_number}.0.png")
+    cluster_number = (frame_number // 5) + 1  # Calculate the cluster number
+    cluster_index = frame_number % 5  # Calculate the cluster index
 
-    class_filename = os.path.join(class_dir, f"{timestamp}_h264_{frame_number}.cls")
+    classnum = 1
+    frame_filename = os.path.join(framenclass_dir, f"{timestamp}_h264_{cluster_number}.{cluster_index}.png")
+
+    class_filename = os.path.join(framenclass_dir, f"{timestamp}_h264_{cluster_number}.cls")
     with open(class_filename, 'w') as file:
-            file.write(f"{classnum}")
+        file.write(f"{classnum}")
 
-    metadata_filename = os.path.join(metadata_dir, f"{timestamp}_h264_{frame_number}.metadata.txt")
+    metadata_filename = os.path.join(framenclass_dir, f"{timestamp}_h264_{cluster_number}.metadata.txt")
     with open(metadata_filename, 'w') as file:
-            file.write(f"FAKEPATH/{metastamp}.h264,{frame_number},{metastamp2}")
+        file.write(f"FAKEPATH/{metastamp}.h264,{frame_number},{metastamp2}")
 
     pygame.image.save(screen, frame_filename)
-    frame_number += 1   
+    frame_number += 1
+
+#deleting extra files - ***edit path
+
+base_path = "/Users/dakshkhetarpaul/Desktop/Winlab/winlab23-nn-features/framenclass/"
+file_pattern = "{}_h264_{}.{}.png"
+class_pattern = "{}_h264_{}.cls"
+meta_pattern = "{}_h264_{}.metadata.txt"
+
+range_num = cluster_index + 1
+
+for i in range(range_num):
+    file_path = os.path.join(base_path, file_pattern.format(timestamp,cluster_number, i))
+    os.remove(file_path)
+
+
+
+os.remove(os.path.join(base_path, class_pattern.format(timestamp,cluster_number)))
+os.remove(os.path.join(base_path, meta_pattern.format(timestamp,cluster_number)))
