@@ -30,11 +30,10 @@ pygame.draw.circle(image_surface, (0, 0, 0), (100, 100), 100, False, True, True,
 clock = pygame.time.Clock()
 
 # Set the total run time in seconds
-total_time = 50
+total_time = 40
 start_time = pygame.time.get_ticks()
 
 rotation_angle = 0
-rotation_speed = -1 #speed in degrees/second, if fps = 1 then same as deg/frame
 
 
 running = True
@@ -60,12 +59,15 @@ while running:
     random_n = np.random.uniform(-10, 10, size=1)
 
     if bias is True and random_n > 0:
-        random_n = np.random.uniform(-10, 10, size=1) + 3
-        print(random_n)
+        random_n = np.random.uniform(-10, 10, size=1) + 30 # Apply bias for positive random_n values
+
+    
+    rotation_angle += random_n 
+       
+    
+    print(rotation_angle)  
     
 
-    rotation_angle += random_n * clock.get_time() / 1000
-    
 
     # Rotate and draw the image
     rotated_image = pygame.transform.rotate(image_surface, rotation_angle)
@@ -81,11 +83,11 @@ while running:
     cluster_index = frame_number % 5  # Calculate the cluster index
     
     #chage in pos after a frame set
-    if cluster_index == 4:
-        rotation_angle = np.random.uniform(0, 360, size=1)
+    #if cluster_index == 4:
+   #     rotation_angle = np.random.uniform(0, 360, size=1)
     
 
-    classnum = 1
+    classnum = 2
     frame_filename = os.path.join(framenclass_dir, f"{timestamp}_h264_{cluster_number}.{cluster_index}.png")
 
     class_filename = os.path.join(framenclass_dir, f"{timestamp}_h264_{cluster_number}.cls")
