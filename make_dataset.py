@@ -55,10 +55,31 @@ class Simulator:
             delta_angle = (np.random.rand(1,) * 4 + 1) + bias
         self.angle += delta_angle
 
+class BWSimulator(Simulator):
+    def __init__(self, screen: pygame.surface.Surface, bias_amt):
+        # Params of simulation that stay the same
+        self.x_dim, self.y_dim = screen.get_size()
+        self.bias_amt = bias_amt
+
+        # Parameters of the simulation subject to change
+        self.brightness = 0.0
+        
+        # Pygame specific details
+        self.screen = screen
+
+    def draw(self):
+        self.screen.fill((self.brightness * 255, self.brightness * 255, self.brightness * 255))
+
+    def reset(self):
+        self.brightness = 0.0
+
+    def update(self, classnum):
+        self.brightness = 0.0 if classnum == 1 else 1.0
+
 # What is the intention of the dataset generator?
 # Simple: Generate a dataset through a predefined simulator
 class DatasetGenerator:
-    def __init__(self, screen_dim, cls: type[Simulator], frames_per_sample=1):
+    def __init__(self, screen_dim, cls, frames_per_sample=1):
         self.screen_dim = screen_dim
         self.frames_per_sample = frames_per_sample
 
@@ -107,12 +128,15 @@ class DatasetGenerator:
                     pygame.display.flip()
                     frame_filename = os.path.join(dirname, f"{sample_name}.{framecount}.png")
                     pygame.image.save(screen, frame_filename)
-        subprocess.call(["tar", "-cvf", f"{dirname}.tar", dirname])
 
-# generate_dataset((224, 224), strength=1.0, frames_per_sample=4, samples_per_class=1000, title='dataset_1_train')
-# generate_dataset((224, 224), strength=1.0, frames_per_sample=4, samples_per_class=100, title='dataset_1_test')
+        filelist = os.listdir(dirname)
+        filelist.sort()
+        tar = tarfile.open(f"{dirname}.tar", 'w')
+        for file in filelist:
+            path = os.path.join(dirname, file)
+            tar.add(path)
+        tar.close()
 
-# sim = Simulator((256, 256))
-# gen = DatasetGenerator((256, 256), Simulator, 4)
-# gen.gendata_dir(10.0, 20000, 'dataset_train')
-# gen.gendata_dir(10.0, 2000, 'dataset_test')
+# gen = DatasetGenerator((256, 256), Simulator, 1)
+# gen.gendata_dir(10.0, 2, 'dataset_train')
+# gen.gendata_dir(10.0, 2, 'dataset_test')
