@@ -1,6 +1,7 @@
 import subprocess
 import numpy as np
 import pygame
+from abc import ABC, abstractmethod
 from datetime import datetime
 import tarfile
 import os
@@ -12,7 +13,27 @@ pac_radius = 16
 pacsurf = pygame.Surface((pac_radius * 2, pac_radius * 2), pygame.SRCALPHA)
 pygame.draw.circle(pacsurf, (0, 0, 0), (pac_radius, pac_radius), pac_radius, False, True, True, True)
 
-class Simulator:
+class Simulator(ABC):
+    @abstractmethod
+    def __init__(self, screen: pygame.surface.Surface, bias_amt):
+        pass
+
+    @abstractmethod
+    def draw(self):
+        pass
+
+    # Randomly resets the state of the simulation
+    @abstractmethod
+    def reset(self):
+        pass
+
+    # This function advances the timestep by 1
+    # Classnum 1 - random; classnum 2 - non random
+    @abstractmethod
+    def update(self, classnum):
+        pass
+
+class PacmanSimulator(Simulator):
     def __init__(self, screen: pygame.surface.Surface, bias_amt):
         # Parameters of the simulation that stay the same
         (self.x_dim, self.y_dim) = screen.get_size()
@@ -24,7 +45,7 @@ class Simulator:
         self.reset()
  
         # Pygame specific details
-        self.radius = 16
+        self.radius = 128
         self.circlesurf = pygame.Surface((self.radius * 2, self.radius * 2), pygame.SRCALPHA)
         pygame.draw.circle(self.circlesurf, (0, 0, 0), (self.radius, self.radius), self.radius, False, True, True, True)
         # pygame.init()
@@ -49,10 +70,13 @@ class Simulator:
     # Classnum 1 - random; classnum 2 - non random
     def update(self, classnum):
         bias = 0 if classnum == 1 else self.bias_amt
+        delta_angle = np.random.uniform(-10, 10)
         if np.random.rand(1,) < 0.5:
-            delta_angle = -(np.random.rand(1,) * 4 + 1)
+            # delta_angle = -(np.random.rand(1,) * 4 + 1)
+            pass
         else:
-            delta_angle = (np.random.rand(1,) * 4 + 1) + bias
+            # delta_angle = (np.random.rand(1,) * 4 + 1) + bias
+            delta_angle += bias
         self.angle += delta_angle
 
 class BWSimulator(Simulator):
@@ -79,15 +103,15 @@ class BWSimulator(Simulator):
 # What is the intention of the dataset generator?
 # Simple: Generate a dataset through a predefined simulator
 class DatasetGenerator:
-    def __init__(self, screen_dim, cls, frames_per_sample=1):
+    def __init__(self, screen_dim, Cls, frames_per_sample=1):
         self.screen_dim = screen_dim
         self.frames_per_sample = frames_per_sample
 
-        if cls != Simulator:
-            fstr = f"{cls.__name__} and {Simulator.__name__}"
+        if not issubclass(Cls, Simulator):
+            fstr = f"{Cls.__name__} and {Simulator.__name__}"
             print(fstr)
-            raise TypeError(f"{cls.__name__} is not an instance of {Simulator.__name__}")
-        self.simcls = cls
+            raise TypeError(f"{Cls.__name__} is not an instance of {Simulator.__name__}")
+        self.simcls = Cls
     
     # Produce one dataset of the simulation (essentially create directory containing elems of tarfiles)
     def gendata_dir(self, bias_amt, samples_per_class, dirname):
@@ -101,6 +125,7 @@ class DatasetGenerator:
         os.makedirs(dirname)
 
         # Generate frames and put frames inside of directory.
+        tar = tarfile.open(f"{dirname}.tar", 'w')
         for classnum in range(1, 3):
             fake_filename = datetime.utcnow().strftime('%Y-%m-%d_%H:%M:%S_%f_h264')
             fake_filepath = datetime.utcnow().strftime('FAKEPATH/%Y-%m-%d %H:%M:%S.%f.h264')
@@ -109,13 +134,14 @@ class DatasetGenerator:
                 sample_name = f"{fake_filename}_{sample_num + 1}"
                 class_filename = os.path.join(dirname, f"{sample_name}.cls")
                 md_filename = os.path.join(dirname, f"{sample_name}.metadata.txt")
+
+                # We must add these to the tarfile after the pngs are added
                 with open(class_filename, 'w') as file:
                     file.write(f"{classnum}")
                 with open(md_filename, 'w') as file:
                     file.write(f"{fake_filepath},{sample_num + 1},{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}")
                 
                 simulation.reset()
-
                 for framecount in range(self.frames_per_sample):
                     for event in pygame.event.get():
                         if event.type == pygame.QUIT:
@@ -128,13 +154,14 @@ class DatasetGenerator:
                     pygame.display.flip()
                     frame_filename = os.path.join(dirname, f"{sample_name}.{framecount}.png")
                     pygame.image.save(screen, frame_filename)
+                    tar.add(frame_filename)
+                    # os.remove(frame_filename)
+                
+                tar.add(class_filename)
+                tar.add(md_filename)
+                # os.remove(class_filename)
+                # os.remove(md_filename)
 
-        filelist = os.listdir(dirname)
-        filelist.sort()
-        tar = tarfile.open(f"{dirname}.tar", 'w')
-        for file in filelist:
-            path = os.path.join(dirname, file)
-            tar.add(path)
         tar.close()
 
 # gen = DatasetGenerator((256, 256), Simulator, 1)
