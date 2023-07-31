@@ -17,20 +17,23 @@ framenclass_dir="framenclass"
 pygame.init()
 
 # Set the width and height of the screen
-width, height = 800, 600
+width, height = 300, 300
 screen = pygame.display.set_mode((width, height))
 screen.fill((255, 255, 255))
 pygame.display.set_caption("circle rotation")
 
-# Create a surface to draw the circle on
-image_surface = pygame.Surface((200, 200), pygame.SRCALPHA)
-pygame.draw.circle(image_surface, (0, 0, 0), (100, 100), 100, False, True, True, True)
+circle_size = 200
+circle_center = (width // 2, height // 2)  # Center of the screen
+image_surface = pygame.Surface((circle_size, circle_size), pygame.SRCALPHA)
+pygame.draw.circle(image_surface, (0, 0, 0), (circle_size // 2, circle_size // 2), circle_size // 2, False, True, True, True)
+
+
 
 # Create a clock object to control the frame rate
 clock = pygame.time.Clock()
 
 # Set the total run time in seconds
-total_time = 40
+total_time = 160
 start_time = pygame.time.get_ticks()
 
 rotation_angle = 0
@@ -59,32 +62,32 @@ while running:
     random_n = np.random.uniform(-10, 10, size=1)
 
     if bias is True and random_n > 0:
-        random_n = np.random.uniform(-10, 10, size=1) + 30 # Apply bias for positive random_n values
+        random_n = np.random.uniform(-10, 10, size=1) + 8 # Apply bias for positive random_n values
+        
 
     
     rotation_angle += random_n 
-       
+    print(rotation_angle)
     
-    print(rotation_angle)  
+    
     
 
 
-    # Rotate and draw the image
     rotated_image = pygame.transform.rotate(image_surface, rotation_angle)
-    rotated_rect = rotated_image.get_rect(center=(400, 300))  # Center the rotated image
+    rotated_rect = rotated_image.get_rect(center=circle_center)  # Center the rotated image
     screen.blit(rotated_image, rotated_rect)
 
     pygame.display.flip()
 
     # Control the frame rate
-    clock.tick(10)
+    clock.tick(120)
 
     cluster_number = (frame_number // 5) + 1  # Calculate the cluster number
     cluster_index = frame_number % 5  # Calculate the cluster index
     
     #chage in pos after a frame set
-    #if cluster_index == 4:
-   #     rotation_angle = np.random.uniform(0, 360, size=1)
+    if cluster_index == 4:
+        rotation_angle = np.random.uniform(0, 360, size=1)
     
 
     classnum = 2
@@ -107,6 +110,7 @@ base_path = "/Users/dakshkhetarpaul/Desktop/Winlab/winlab23-nn-features/framencl
 file_pattern = "{}_h264_{}.{}.png"
 class_pattern = "{}_h264_{}.cls"
 meta_pattern = "{}_h264_{}.metadata.txt"
+
 
 range_num = cluster_index + 1
 
