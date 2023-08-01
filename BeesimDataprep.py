@@ -4,7 +4,7 @@ import pathlib
 import os
 import subprocess
 from multiprocessing import Pool
-from make_dataset import DatasetGenerator, PacmanSimulator
+from make_dataset import DatasetGenerator, PacmanSimulator, LeftRightSimulator, Simulator
 
 # This is the directory that we are in
 currentDir = pathlib.Path(__file__).parent.resolve()
@@ -82,6 +82,13 @@ parser.add_argument(
     default=0.8,
     help='The test/train split that is required (percent that is reserved for training data)'
 )
+parser.add_argument(
+    '--threads',
+    type=int,
+    required=False,
+    default=10,
+    help='The number of threads available in the pool'
+)
 args = parser.parse_args()
 
 globalProgramDirectory = pathlib.Path(args.programdir).resolve()
@@ -98,16 +105,19 @@ total_spc = args.samples
 train_spc = int(total_spc * args.ttsplit)
 test_spc = total_spc - train_spc
 
-maykr = DatasetGenerator((256, 256), PacmanSimulator, 4)
-# Objective is to generate 2 tar files for one datapoint, one train.sh file, and one csv entry for that run
-bias_list = np.linspace(args.lowbias, args.highbias, args.datapoints)
-for i, bias_amt in enumerate(bias_list):
-    print(f"Started generating dataset {i}")
-    title = f"dataset_{i}"
+height = args.height
+width = args.width
+num_threads = args.threads
+
+# This is the function that a thread will use to save a dataset.
+def submitrun(maykr: DatasetGenerator, bias_amt, dataset_num: int):
+    print(f"Started generating dataset {dataset_num}")
+    title = f"dataset_{dataset_num}"
     maykr.gendata_dir(bias_amt=bias_amt, samples_per_class=train_spc, dirname=f"{title}_train")
     maykr.gendata_dir(bias_amt=bias_amt, samples_per_class=test_spc, dirname=f"{title}_test")
-    train_job_filename = f"train_{i}.sh"
+    train_job_filename = f"train_{dataset_num}.sh"
 
+    # Autogenerate the script for training one level of bias (for slurm job submission)
     with open(train_job_filename,'w') as trainFile:
         trainFile.write("#!/usr/bin/bash \n")
         #trainFile.write("#SBATCH --gpus-per-node=1 \n")
@@ -122,6 +132,17 @@ for i, bias_amt in enumerate(bias_list):
         trainFile.write(traincommand_local +  "\n") # write the training command to the training command
         trainFile.write("echo end-is: `date` \n \n") # add end timestamp
     
-    subprocess.run(['sbatch', '-G', '1', '-o', f"trainlog_{i}.log", train_job_filename])
+    subprocess.run(['sbatch', '-G', '1', '-o', f"trainlog_{dataset_num}.log", train_job_filename])
+    print(f"Dataset {dataset_num} just submitted a job.")
 
-# sbatch -G 1 -o dataset_trainlog_0.log train_1.sh 
+# Objective is to generate 2 tar files for one datapoint, one train.sh file
+bias_list = np.linspace(args.lowbias, args.highbias, args.datapoints)
+poolargs = []
+for i, bias_amt in enumerate(bias_list):
+    maykr = DatasetGenerator((256, 256), LeftRightSimulator, 4)
+    # submitrun(maykr, bias_amt, i)
+    poolargs.append((maykr, bias_amt, i))
+
+with Pool(processes=num_threads) as pool:
+    for result in pool.starmap(submitrun, poolargs):
+        print(result)
