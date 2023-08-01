@@ -33,6 +33,42 @@ class Simulator(ABC):
     def update(self, classnum):
         pass
 
+class LeftRightSimulator(Simulator):
+    def __init__(self, screen: pygame.surface.Surface, bias_amt):
+        (self.x_dim, self.y_dim) = screen.get_size()
+        self.pos = (self.x_dim // 2, self.y_dim // 2)
+        self.bias_amt = bias_amt
+
+        self.angle = 0
+        self.reset()
+    
+        # Pygame specific details
+        self.radius = 128
+        self.circlesurf = pygame.Surface((self.radius * 2, self.radius * 2), pygame.SRCALPHA)
+        pygame.draw.circle(self.circlesurf, (0, 0, 0), (self.radius, self.radius), self.radius, False, True, True, True)
+        # pygame.init()
+        self.screen = screen
+
+        # Based on the current angle, draw the pacman onto the screen
+    def draw_pacman_angle(self):
+        rot_surf = pygame.transform.rotate(self.circlesurf, self.angle)
+        rot_rect = rot_surf.get_rect(center=self.pos)
+        self.screen.blit(rot_surf, rot_rect)
+
+    def draw(self):
+        self.screen.fill((255, 255, 255))
+        # draw_pacman_angle(self.screen, self.pos[0], self.pos[1], self.angle)
+        self.draw_pacman_angle()
+
+    # Randomly resets the state of the simulation
+    def reset(self):
+        self.angle = np.random.rand(1,) * 360
+
+    def update(self, classnum):
+        delta_angle = np.random.uniform(1, 5)
+        delta_angle = -delta_angle if classnum == 1 else delta_angle
+        self.angle += delta_angle
+
 class PacmanSimulator(Simulator):
     def __init__(self, screen: pygame.surface.Surface, bias_amt):
         # Parameters of the simulation that stay the same
