@@ -4,7 +4,8 @@ import pathlib
 import os
 import subprocess
 from multiprocessing import Pool
-from make_dataset import DatasetGenerator, PacmanSimulator, LeftRightSimulator, Simulator
+from make_dataset import DatasetGenerator, Simulator
+from simulations import PacmanSimulator, LeftRightSimulator
 
 # This is the directory that we are in
 currentDir = pathlib.Path(__file__).parent.resolve()
@@ -139,7 +140,7 @@ def submitrun(maykr: DatasetGenerator, bias_amt, dataset_num: int):
 bias_list = np.linspace(args.lowbias, args.highbias, args.datapoints)
 poolargs = []
 for i, bias_amt in enumerate(bias_list):
-    maykr = DatasetGenerator((256, 256), LeftRightSimulator, 4)
+    maykr = DatasetGenerator((256, 256), PacmanSimulator, frames_per_sample)
     # submitrun(maykr, bias_amt, i)
     poolargs.append((maykr, bias_amt, i))
 
