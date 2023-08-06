@@ -1,6 +1,22 @@
 import pygame
 import numpy as np
+
+from bee import Bee
 from make_dataset import Simulator
+
+class BeeSimulator(Simulator):
+    def __init__(self, screen: pygame.surface.Surface, bias_amt):
+        self.screen = screen
+        self.bee = Bee(screen, walk_strength=2, custom_update=None, dot_radius=20)
+
+    def update(self):
+        self.bee.update()
+    
+    def reset(self):
+        self.bee.reset()
+
+    def draw(self):
+        self.bee.draw()
 
 class LeftRightSimulator(Simulator):
     def __init__(self, screen: pygame.surface.Surface, bias_amt):

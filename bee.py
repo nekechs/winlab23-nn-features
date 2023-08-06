@@ -4,22 +4,21 @@ import math
 import random
 
 class Bee:
-    def __init__(self, screen, walk_strength, custom_update=None, dot_radius=20, dot_color=(255,0,0), dot_speed=2, x_width=500, y_width=500):
-        # Initialize position and rotation
-        self.x_pos = random.uniform(0,x_width)
-        self.y_pos = random.uniform(0,y_width)
-        self.rot = 2 * math.pi * random.random()
-
-        self.dot_radius = dot_radius
-        self.dot_color = dot_color
-        self.dot_speed = dot_speed
-
-        self.walk_strength = walk_strength
-
+    def __init__(self, screen: pygame.surface.Surface, walk_strength, custom_update=None, dot_radius=20):
         # Initialize the screen parameters
         self.screen = screen
-        self.x_width = x_width
-        self.y_width = y_width
+        (self.x_width, self.y_width) = screen.get_size()
+
+        # Initialize position and rotation
+        self.x_pos = random.uniform(0,self.x_width)
+        self.y_pos = random.uniform(0,self.y_width)
+        self.rot = 2 * math.pi * random.random()
+        self.reset()
+
+        self.dot_radius = dot_radius
+        self.dot_color = (255, 0, 0)
+
+        self.walk_strength = walk_strength
 
         # Stuff stored to make the arrow
         self.arrow_color = (255, 255, 0)
@@ -53,6 +52,12 @@ class Bee:
     def update_nonrand(self):
         if self.custom_update is not None:
             return self.custom_update(self)
+
+    def reset(self):
+        # Initialize position and rotation
+        self.x_pos = random.uniform(0,self.x_width)
+        self.y_pos = random.uniform(0,self.y_width)
+        self.rot = 2 * math.pi * random.random()
 
     def draw(self):
         # Draw the circle
