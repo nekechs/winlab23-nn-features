@@ -18,6 +18,31 @@ class BeeSimulator(Simulator):
     def draw(self):
         self.bee.draw()
 
+def bias_north(bee: Bee, bias):
+    # print(bee.rot)
+    if bee.rot < 180:
+        bee.rot -= int(bias)
+    else:
+        bee.rot += int(bias)
+
+class NorthBiasSimulator(Simulator):
+    def __init__(self, screen: pygame.surface.Surface, bias_amt):
+        self.screen = screen
+        self.bee = Bee(screen, 5.0, bias_north, 20)
+        self.reset()
+        self.bias_amt = bias_amt
+    
+    def reset(self):
+        self.bee.reset()
+
+    def update(self, classnum):
+        bias = self.bias_amt if classnum == 1 else 0
+        self.bee.update(bias)
+
+    def draw(self):
+        self.screen.fill((255, 255, 255))
+        self.bee.draw()
+
 class LeftRightSimulator(Simulator):
     def __init__(self, screen: pygame.surface.Surface, bias_amt):
         (self.x_dim, self.y_dim) = screen.get_size()

@@ -4,10 +4,17 @@ from bee import Bee, PathBee
 import os
 import subprocess
 from datetime import datetime
-import random
+import math
+
+def bias_north(bee: Bee, bias):
+    print(bee.rot)
+    if bee.rot < 180:
+        bee.rot -= int(bias)
+    else:
+        bee.rot += int(bias)
 
 def test_pathbee():
-    (x_dim, y_dim) = (512, 512)
+    (x_dim, y_dim) = (1024, 1024)
     pygame.init()
     screen = pygame.display.set_mode([x_dim, y_dim])
     start_time = time.time()
@@ -15,10 +22,11 @@ def test_pathbee():
 
     # bee = PathBee(screen, 5.0, 20)
     bees = []
-    for _ in range(9):
-        bees.append(PathBee(screen, 10, 20))
+    for _ in range(1):
+        # bees.append(PathBee(screen, 10, 20))
+        bees.append(Bee(screen, walk_strength=2.0, custom_update=bias_north, dot_radius=20))
     for frame_number in range(1024):
-        clock.tick(10)
+        clock.tick(1)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -26,7 +34,9 @@ def test_pathbee():
 
         screen.fill((255, 255, 255))
         for (i, bee) in enumerate(bees):
-            bee.update(i * 10)
+            # bias = 0 if i < 5 else 90
+            bias = 15
+            bee.update(bias)
             bee.draw()
 
         pygame.display.flip()
