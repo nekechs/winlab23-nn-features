@@ -1,7 +1,7 @@
 import pygame
 import numpy as np
 
-from bee import Bee
+from bee import Bee, PathBee
 from make_dataset import Simulator
 
 class BeeSimulator(Simulator):
@@ -24,6 +24,24 @@ def bias_north(bee: Bee, bias):
         bee.rot -= int(bias)
     else:
         bee.rot += int(bias)
+
+class FieldVisionSimulator(Simulator):
+    def __init__(self, screen: pygame.surface.Surface, bias_amt):
+        self.screen = screen
+        self.bee = PathBee(screen, 10.0, 20)
+        self.reset()
+        self.bias_amt = bias_amt
+
+    def reset(self):
+        self.bee.reset()
+
+    def update(self, classnum):
+        bias = self.bias_amt if classnum == 1 else 0
+        self.bee.update(bias)
+
+    def draw(self):
+        self.screen.fill((255, 255, 255))
+        self.bee.draw()
 
 class NorthBiasSimulator(Simulator):
     def __init__(self, screen: pygame.surface.Surface, bias_amt):

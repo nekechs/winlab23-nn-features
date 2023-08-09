@@ -5,6 +5,7 @@ import os
 import subprocess
 from datetime import datetime
 import math
+import numpy as np
 
 def bias_north(bee: Bee, bias):
     print(bee.rot)
@@ -22,11 +23,12 @@ def test_pathbee():
 
     # bee = PathBee(screen, 5.0, 20)
     bees = []
-    for _ in range(1):
+    for _ in range(10):
         # bees.append(PathBee(screen, 10, 20))
-        bees.append(Bee(screen, walk_strength=2.0, custom_update=bias_north, dot_radius=20))
+        bees.append(PathBee(screen, walk_strength=5.0, dot_radius=20))
+        # bees.append(PathBee(screen, walk_strength=2.0, custom_update=bias_north, dot_radius=20))
     for frame_number in range(1024):
-        clock.tick(1)
+        clock.tick(30)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -35,8 +37,11 @@ def test_pathbee():
         screen.fill((255, 255, 255))
         for (i, bee) in enumerate(bees):
             # bias = 0 if i < 5 else 90
-            bias = 15
-            bee.update(bias)
+            # bias = i * 5
+            bias = 30
+            cont = bee.update(np.random.normal(bias, 0))
+            # if not cont is None and cont == False:
+            #     return
             bee.draw()
 
         pygame.display.flip()

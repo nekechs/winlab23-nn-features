@@ -12,18 +12,11 @@ class PathBee:
         (self.x_width, self.y_width) = screen.get_size()
 
         # Initialize position and rotation
-        # self.start_pos = pygame.math.Vector2(np.random.uniform(0, self.x_width),
-        #                                     np.random.uniform(0, self.y_width))
-        # self.end_pos = pygame.math.Vector2(np.random.uniform(0, self.x_width),
-        #                                     np.random.uniform(0, self.y_width))
-        self.start_pos = pygame.math.Vector2(360, 200)
-        self.end_pos = pygame.math.Vector2(250, 310)
-        self.current_pos = pygame.math.Vector2(self.start_pos)
-        self.rot = 2 * math.pi * random.random()
-        # self.reset()
-
-        goal_displacement = self.end_pos - self.start_pos
-        self.Dmax = goal_displacement.length()
+        self.Dmax = 0
+        self.end_pos = pygame.math.Vector2(0, 0)
+        self.current_pos = pygame.math.Vector2(0, 0)
+        self.rot = 0
+        self.reset()
 
         self.dot_radius = dot_radius
         self.dot_color = (255, 0, 0)
@@ -40,50 +33,56 @@ class PathBee:
         ]
 
     def reset(self):
-        self.start_pos = pygame.math.Vector2(np.random.uniform(0, self.x_width),
+        # start_pos = pygame.math.Vector2(100, 100)
+        # self.end_pos = pygame.math.Vector2(500, 500)
+        start_pos = pygame.math.Vector2(np.random.uniform(0, self.x_width),
                                             np.random.uniform(0, self.y_width))
         self.end_pos = pygame.math.Vector2(np.random.uniform(0, self.x_width),
                                             np.random.uniform(0, self.y_width))
-        self.current_pos = pygame.math.Vector2(self.start_pos)
-        self.rot = 2 * math.pi * random.random()
+        self.Dmax = (self.end_pos - start_pos).length()
+
+        # Defines the bounding box in which to place the current position
+        left = max(0, self.end_pos.x - self.Dmax)
+        right = min(self.x_width, self.end_pos.x + self.Dmax)
+        bottom = max(0, self.end_pos.y - self.Dmax)
+        top = min(self.y_width, self.end_pos.y + self.Dmax)
+
+        # Pick the current position randomly
+        self.current_pos = pygame.math.Vector2(np.random.uniform(left, right),
+                                            np.random.uniform(bottom, top))
+        self.rot = np.random.uniform(0, 360)
 
     # F is the amount of field distortion.
     def update(self, F):
         goal_displacement = (self.end_pos - self.current_pos)
         dist = goal_displacement.length()
         if dist < self.dot_radius:
-            return
-        self.current_pos += POS_XAXIS.rotate(self.rot) * self.walk_strength
+            return False
+        
         direct_angle = POS_XAXIS.angle_to(goal_displacement)
 
-        field_distortion = F * (1 - math.exp(- direct_angle**2))
-        print(direct_angle ** 2)
-        # field_distortion = F
+        field_distortion = F * (1 - math.exp(math.fabs(direct_angle) % -180))
+        # print(direct_angle)
         if direct_angle >= 0:
-            J = min(360, direct_angle + field_distortion)
-        else:
-            direct_angle += 360
+            # In this case the angle ranges from 0 to 180 degrees
             J = max(0, direct_angle - field_distortion)
-
-        # if direct_angle < 0:
-        #     direct_angle += 360
-        # if self.rot < 180:
-        #     J = min(360, self.rot + F)
-        # else:
-        #     J = max(0, self.rot - F)
-
-        # print(f"Direct angle: {direct_angle}; J: {J}")
+        else:
+            # In this case, the angle ranges from 0 to -180 degrees, or 180 to 360 degrees
+            direct_angle += 360
+            J = min(360, direct_angle + field_distortion)
+        self.current_pos += POS_XAXIS.rotate(self.rot) * self.walk_strength
 
         W1 = (dist - self.Dmax) ** 2 / (self.Dmax ** 2)
         W2 = 1 - W1
         self.rot = W1 * direct_angle + W2 * J
-        # print(f"{self.rot}\n")
+        
+        return True
 
     def draw(self):
         # Draw the circle
         pygame.draw.circle(self.screen, self.dot_color, self.current_pos, self.dot_radius)
-        pygame.draw.circle(self.screen, pygame.Color("blue"), self.start_pos, self.dot_radius)
-        pygame.draw.circle(self.screen, pygame.Color("green"), self.end_pos, self.dot_radius)
+        # pygame.draw.circle(self.screen, pygame.Color("blue"), self.end_pos, self.Dmax, width=2)
+        # pygame.draw.circle(self.screen, pygame.Color("green"), self.end_pos, self.dot_radius // 4)
 
         # Draw the triangle
         rotated_arrow_points = []
